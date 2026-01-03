@@ -1,8 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { getHourlyWeather, HourlyWeatherData } from '../services/weatherService';
+import { TimerState } from '../types';
 
-const Clock: React.FC = () => {
+interface ClockProps {
+  timerState: TimerState;
+}
+
+const Clock: React.FC<ClockProps> = ({ timerState }) => {
   const [time, setTime] = useState(new Date());
   const [hourlyWeather, setHourlyWeather] = useState<HourlyWeatherData[]>([]);
   const [weatherLoading, setWeatherLoading] = useState(true);
@@ -51,6 +56,12 @@ const Clock: React.FC = () => {
     });
   };
 
+  const formatTimerDisplay = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
+
   return (
     <div className="flex flex-col items-center justify-center p-8 transition-all duration-500 w-full">
       <div className="text-sm uppercase tracking-[0.3em] opacity-70 mb-2 font-light text-center">
@@ -62,6 +73,14 @@ const Clock: React.FC = () => {
       <div className="text-lg md:text-xl mt-4 font-light opacity-80 tracking-widest text-center">
         {formatDate(time)}
       </div>
+      {timerState.isActive && (
+        <div className="mt-4 px-6 py-3 rounded-xl bg-white/10 border border-white/20 backdrop-blur-sm">
+          <div className="text-xs uppercase opacity-60 mb-1 text-center">タイマー</div>
+          <div className="text-2xl md:text-3xl font-mono font-bold text-center text-blue-300">
+            {formatTimerDisplay(timerState.remainingSeconds)}
+          </div>
+        </div>
+      )}
       <div className="mt-6 w-full max-w-4xl flex flex-col items-center">
         {weatherLoading ? (
           <div className="text-sm opacity-50 animate-pulse text-center">天気情報を取得中...</div>

@@ -1,10 +1,34 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Clock from './components/Clock';
 import Timer from './components/Timer';
+import { TimerState } from './types';
 
 const App: React.FC = () => {
   const [view, setView] = useState<'clock' | 'timer'>('clock');
+  const [timerState, setTimerState] = useState<TimerState>({
+    remainingSeconds: 600,
+    totalSeconds: 600,
+    isActive: false,
+    minutesInput: 10
+  });
+
+  // タイマーのカウントダウン処理
+  useEffect(() => {
+    let interval: number | undefined;
+    if (timerState.isActive && timerState.remainingSeconds > 0) {
+      interval = window.setInterval(() => {
+        setTimerState((prev) => ({
+          ...prev,
+          remainingSeconds: prev.remainingSeconds - 1
+        }));
+      }, 1000);
+    } else if (timerState.remainingSeconds === 0 && timerState.isActive) {
+      setTimerState((prev) => ({ ...prev, isActive: false }));
+      alert("時間になりました！");
+    }
+    return () => clearInterval(interval);
+  }, [timerState.isActive, timerState.remainingSeconds]);
 
   // Background Image (Serene Lake)
   const bgUrl = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80";
@@ -23,11 +47,11 @@ const App: React.FC = () => {
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center p-4 w-full">
         {view === 'clock' ? (
           <div className="animate-fadeIn w-full">
-            <Clock />
+            <Clock timerState={timerState} />
           </div>
         ) : (
           <div className="animate-fadeIn w-full">
-            <Timer />
+            <Timer timerState={timerState} setTimerState={setTimerState} />
           </div>
         )}
       </main>

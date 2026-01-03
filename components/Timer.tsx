@@ -1,26 +1,14 @@
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React from 'react';
+import { TimerState } from '../types';
 
-const Timer: React.FC = () => {
-  const [minutesInput, setMinutesInput] = useState<number>(10);
-  const [remainingSeconds, setRemainingSeconds] = useState<number>(600);
-  const [totalSeconds, setTotalSeconds] = useState<number>(600);
-  const [isActive, setIsActive] = useState<boolean>(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+interface TimerProps {
+  timerState: TimerState;
+  setTimerState: React.Dispatch<React.SetStateAction<TimerState>>;
+}
 
-  useEffect(() => {
-    let interval: number | undefined;
-    if (isActive && remainingSeconds > 0) {
-      interval = window.setInterval(() => {
-        setRemainingSeconds((prev) => prev - 1);
-      }, 1000);
-    } else if (remainingSeconds === 0 && isActive) {
-      setIsActive(false);
-      // Simple beep or notification logic could go here
-      alert("時間になりました！");
-    }
-    return () => clearInterval(interval);
-  }, [isActive, remainingSeconds]);
+const Timer: React.FC<TimerProps> = ({ timerState, setTimerState }) => {
+  const { minutesInput, remainingSeconds, totalSeconds, isActive } = timerState;
 
   const toggleTimer = () => {
     if (!isActive) {
@@ -28,22 +16,40 @@ const Timer: React.FC = () => {
         handleReset();
       }
     }
-    setIsActive(!isActive);
+    setTimerState((prev) => ({ ...prev, isActive: !prev.isActive }));
   };
 
   const handleReset = () => {
     const seconds = minutesInput * 60;
-    setRemainingSeconds(seconds);
-    setTotalSeconds(seconds);
-    setIsActive(false);
+    setTimerState({
+      ...timerState,
+      remainingSeconds: seconds,
+      totalSeconds: seconds,
+      isActive: false
+    });
   };
 
   const handleMinutesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value) || 0;
-    setMinutesInput(val);
     if (!isActive) {
-      setRemainingSeconds(val * 60);
-      setTotalSeconds(val * 60);
+      const seconds = val * 60;
+      setTimerState({
+        ...timerState,
+        minutesInput: val,
+        remainingSeconds: seconds,
+        totalSeconds: seconds
+      });
+    } else {
+      setTimerState({
+        ...timerState,
+        minutesInput: val
+      });
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !isActive && remainingSeconds > 0) {
+      toggleTimer();
     }
   };
 
@@ -94,6 +100,7 @@ const Timer: React.FC = () => {
             type="number"
             value={minutesInput}
             onChange={handleMinutesChange}
+            onKeyDown={handleKeyDown}
             className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400/50"
             disabled={isActive}
           />
